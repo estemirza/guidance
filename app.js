@@ -15,6 +15,10 @@ const state = {
 };
 applyTheme(); applyScale(); applyTr();
 
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferredPrompt=e; });
+window.addEventListener('appinstalled', ()=>{ deferredPrompt=null; });
+
 const SVG_MARK = `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 <g stroke="currentColor" stroke-width="6" stroke-linecap="round">
 ${Array.from({length:16}).map((_,i)=>{const a=i*22.5*Math.PI/180;const x1=50+14*Math.cos(a),y1=50+14*Math.sin(a),x2=50+40*Math.cos(a),y2=50+40*Math.sin(a);return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;}).join('')}
@@ -318,6 +322,7 @@ function openSettings(){
     <div class="row"><span>Translation</span><div class="seg" id="seg-tr">
       <button data-v="on" class="${state.showTr?'on':''}">Show</button>
       <button data-v="off" class="${!state.showTr?'on':''}">Hide</button></div></div>
+    <div class="row"><span>Install</span><span id="install-slot"></span></div>
     <div class="row"><span>Offline</span><button class="btn ghost" id="dl">Download all</button></div>
     <div class="row" style="border:0"><span style="color:var(--ink-soft);font-size:.85rem">Personal copy for study</span>
       <button class="btn" id="close">Done</button></div>
@@ -331,6 +336,22 @@ function openSettings(){
     state.fscale=+v; LS.set('fscale',+v); applyScale(); bg.querySelectorAll('#seg-size button').forEach(b=>b.classList.toggle('on',b.dataset.v===v)); });
   bg.querySelector('#seg-tr').addEventListener('click',e=>{ const v=e.target.dataset.v; if(!v)return;
     state.showTr=(v==='on'); LS.set('showTr',state.showTr); applyTr(); bg.querySelectorAll('#seg-tr button').forEach(b=>b.classList.toggle('on',b.dataset.v===v)); });
+  (function(){
+    const slot=bg.querySelector('#install-slot');
+    const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone===true;
+    const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    const hint=t=>`<span style="color:var(--ink-soft);font-size:.82rem;text-align:right;max-width:60%">${t}</span>`;
+    if(standalone){ slot.innerHTML=hint('Installed ✓'); }
+    else if(deferredPrompt){
+      slot.innerHTML='<button class="btn" id="installbtn">Install app</button>';
+      slot.querySelector('#installbtn').addEventListener('click',async()=>{
+        try{ deferredPrompt.prompt(); const c=await deferredPrompt.userChoice; deferredPrompt=null;
+          toast(c && c.outcome==='accepted'?'Installing…':'Install dismissed'); slot.innerHTML=hint('Installing…'); }catch(e){}
+      });
+    }
+    else if(isIOS){ slot.innerHTML=hint('Tap Share → Add to Home Screen'); }
+    else { slot.innerHTML=hint('Browser menu → Install app'); }
+  })();
   bg.querySelector('#dl').addEventListener('click',async ev=>{
     const btn=ev.target; btn.textContent='Downloading…'; btn.disabled=true;
     const idx=await getIndex(); let done=0;
