@@ -182,16 +182,16 @@ button{font-family:inherit;cursor:pointer}
 .ayah-end{display:inline-block;font-family:var(--sans);font-size:.9rem;color:var(--maroon);
   border:1px solid var(--maroon-soft);border-radius:50%;min-width:1.9em;height:1.9em;line-height:1.75em;
   text-align:center;margin:0 8px;vertical-align:middle}
-.ayah-actions{display:flex;align-items:center;gap:14px;margin-top:12px}
+.ayah-body{cursor:pointer;border-radius:8px}
+.ayah-body:active{opacity:.7}
+.ayah-tr{font-family:var(--sans);color:var(--ink-soft);font-size:.98rem;line-height:1.6;margin-top:10px;text-align:left}
+[data-tr="off"] .ayah-tr{display:none}
+.ayah.has-note .ayah-end{background:var(--maroon);color:var(--cream);border-color:var(--maroon)}
+.ayah-actions{display:flex;align-items:center;gap:14px;margin-top:10px}
 .ayah-bm{background:transparent;border:0;color:var(--maroon);font-size:1.15rem;line-height:1;padding:2px 4px}
 .ayah-bm.on{color:var(--gold)}
 .ayah-bm:active{transform:scale(.9)}
-.ayah-link{background:transparent;border:0;color:var(--maroon);font-weight:600;
-  font-size:.85rem;padding:4px 0;display:inline-flex;align-items:center;gap:4px}
-.ayah-link:active{opacity:.6}
-.ayah-nolink{font-size:.8rem;color:var(--ink-soft)}
-.ayah.bm-hit{animation:cmflash 2.2s ease;border-radius:8px}
-blockquote.cm-hit{animation:cmflash 2.2s ease}
+.cm-hit,.bm-hit{animation:cmflash 2.2s ease;border-radius:8px}
 @keyframes cmflash{0%,100%{background:transparent}18%{background:rgba(201,162,75,.45)}}
 
 @media(min-width:640px){ .hero h1{font-size:2.4rem} }

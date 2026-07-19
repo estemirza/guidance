@@ -9,10 +9,11 @@ const LS = {
 const state = {
   theme: LS.get('theme','light'),
   fscale: LS.get('fscale',1),
-  saved: LS.get('saved',[]),      // [{n,tab,label}]
+  showTr: LS.get('showTr',true),  // show translation in Qur'an tab
+  saved: LS.get('saved',[]),      // [{n,a,label}]
   last: LS.get('last',null),      // {n,tab,y}
 };
-applyTheme(); applyScale();
+applyTheme(); applyScale(); applyTr();
 
 const SVG_MARK = `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 <g stroke="currentColor" stroke-width="6" stroke-linecap="round">
@@ -37,14 +38,14 @@ async function getSurah(n){
   const r = await fetch('data/surah-'+n+'.json');
   const o = await r.json(); surahCache.set(n,o); return o;
 }
-const QURAN_CDN='https://cdn.jsdelivr.net/npm/quran-json@3.1.2/dist/chapters/';
+const QURAN_CDN='https://cdn.jsdelivr.net/npm/quran-json@3.1.2/dist/chapters/en/';
 const quranCache=new Map();
 async function getQuran(n){
   if(quranCache.has(n)) return quranCache.get(n);
   const r=await fetch(QURAN_CDN+n+'.json');
   if(!r.ok) throw new Error('quran fetch');
   const o=await r.json();
-  const verses=(o.verses||[]).map(v=>({a:v.id,t:v.text}));
+  const verses=(o.verses||[]).map(v=>({a:v.id,t:v.text,tr:v.translation||''}));
   quranCache.set(n,verses); return verses;
 }
 const AR_DIGITS='٠١٢٣٤٥٦٧٨٩';
@@ -54,6 +55,7 @@ function tabLabel(t){ return t==='deep'?'Deeper Look':t==='quran'?"Qur'an":'Conc
 /* ---------------- theming ---------------- */
 function applyTheme(){ document.documentElement.setAttribute('data-theme', state.theme); }
 function applyScale(){ document.documentElement.style.setProperty('--fscale', state.fscale); }
+function applyTr(){ document.documentElement.setAttribute('data-tr', state.showTr?'on':'off'); }
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.hidden=false; clearTimeout(t._h); t._h=setTimeout(()=>t.hidden=true,1800); }
 
 /* ---------------- helpers ---------------- */
@@ -156,25 +158,30 @@ async function viewReader(n, params){
   function highlightAyah(a){
     const el=content.querySelector('.ayah[data-a="'+a+'"]');
     if(!el) return;
-    el.scrollIntoView({behavior:'smooth',block:'center'});
+    el.scrollIntoView({block:'center'});   // instant jump
     el.classList.add('bm-hit'); setTimeout(()=>el.classList.remove('bm-hit'),2200);
   }
   function passageForAyah(a){
     for(let i=0;i<cmap.length;i++){ if(a>=cmap[i][0] && a<=cmap[i][1]) return i; }
-    for(let i=cmap.length-1;i>=0;i--){ if(cmap[i][1]<=a) return i; }
-    return cmap.length? 0 : -1;
+    return -1;
   }
-  function scrollToPassage(i){
+  function scrollToAyah(a){
+    const i=passageForAyah(a); if(i<0) return;
     const bqs=content.querySelectorAll('blockquote');
-    const el=bqs[i]; if(!el) return;
-    el.scrollIntoView({behavior:'smooth',block:'start'});
-    el.classList.add('cm-hit'); setTimeout(()=>el.classList.remove('cm-hit'),2200);
+    const start=bqs[i]; if(!start) return;
+    let target=start, el=start.nextElementSibling;
+    const re=new RegExp('^Ayah\\s+'+a+'(?!\\d)');   // exact āyah sub-heading inside the passage
+    while(el && el.tagName!=='BLOCKQUOTE'){
+      if(/^H[2-6]$/.test(el.tagName) && re.test(el.textContent.trim())){ target=el; break; }
+      el=el.nextElementSibling;
+    }
+    target.scrollIntoView({block:'start'});   // instant jump — no visible scrolling
+    target.classList.add('cm-hit'); setTimeout(()=>target.classList.remove('cm-hit'),2200);
   }
-  async function goPassage(a){
-    const i=passageForAyah(a);
-    if(i<0){ toast("No commentary for this āyah yet"); return; }
+  async function goAyah(a){
+    if(passageForAyah(a)<0){ toast("No commentary for this āyah yet"); return; }
     scrollPos[tab]=window.scrollY;
-    tab='concise'; await render(null); scrollToPassage(i);
+    tab='concise'; await render(null); scrollToAyah(a);
   }
   async function renderQuran(){
     content.innerHTML=`<div class="empty">Loading Qur'an…</div>`;
@@ -183,15 +190,17 @@ async function viewReader(n, params){
     catch(e){ content.innerHTML=`<div class="note">Couldn't load the Qur'an text. Go online once to cache it — then it works offline.</div>`; return; }
     content.innerHTML=`<div class="quran">`+verses.map(v=>{
       const has=passageForAyah(v.a)>=0;
-      return `<div class="ayah" data-a="${v.a}">
-        <div class="ayah-ar">${v.t}<span class="ayah-end">${toArabicNum(v.a)}</span></div>
+      return `<div class="ayah${has?' has-note':''}" data-a="${v.a}">
+        <div class="ayah-body" role="button" tabindex="0" aria-label="Āyah ${v.a} commentary">
+          <div class="ayah-ar">${v.t}<span class="ayah-end">${toArabicNum(v.a)}</span></div>
+          ${v.tr?`<div class="ayah-tr">${esc(v.tr)}</div>`:''}
+        </div>
         <div class="ayah-actions">
           <button class="ayah-bm ${isBm(v.a)?'on':''}" data-a="${v.a}" aria-label="Bookmark āyah">${isBm(v.a)?ICO.bookmarkOn:ICO.bookmark}</button>
-          ${has?`<button class="ayah-link" data-a="${v.a}">Concise commentary ›</button>`:'<span class="ayah-nolink">No note yet</span>'}
         </div>
       </div>`;
     }).join('')+`</div>`;
-    content.querySelectorAll('.ayah-link').forEach(b=>b.addEventListener('click',()=>goPassage(+b.dataset.a)));
+    content.querySelectorAll('.ayah-body').forEach(el=>el.addEventListener('click',()=>goAyah(+el.parentElement.dataset.a)));
     content.querySelectorAll('.ayah-bm').forEach(b=>b.addEventListener('click',()=>{
       const a=+b.dataset.a; toggleBm(a); const on=isBm(a);
       b.classList.toggle('on',on); b.textContent=on?ICO.bookmarkOn:ICO.bookmark;
@@ -217,7 +226,7 @@ async function viewReader(n, params){
   const qa=+params.get('qa');
   const ay=+params.get('ayah');
   if(qa){ tab='quran'; render(null).then(()=>highlightAyah(qa)); }
-  else if(ay){ tab='concise'; render(null).then(()=>scrollToPassage(passageForAyah(ay))); }
+  else if(ay){ tab='concise'; render(null).then(()=>scrollToAyah(ay)); }
   else if(params.get('resume')==='1' && LS.get('last') && LS.get('last').n===n){ const y=LS.get('last').y||0; setTimeout(()=>window.scrollTo(0,y),60); }
   else window.scrollTo(0,0);
 }
@@ -306,6 +315,9 @@ function openSettings(){
       <button data-v="1" class="${state.fscale==1?'on':''}">A</button>
       <button data-v="1.15" class="${state.fscale==1.15?'on':''}">A+</button>
       <button data-v="1.3" class="${state.fscale==1.3?'on':''}">A++</button></div></div>
+    <div class="row"><span>Translation</span><div class="seg" id="seg-tr">
+      <button data-v="on" class="${state.showTr?'on':''}">Show</button>
+      <button data-v="off" class="${!state.showTr?'on':''}">Hide</button></div></div>
     <div class="row"><span>Offline</span><button class="btn ghost" id="dl">Download all</button></div>
     <div class="row" style="border:0"><span style="color:var(--ink-soft);font-size:.85rem">Personal copy for study</span>
       <button class="btn" id="close">Done</button></div>
@@ -317,6 +329,8 @@ function openSettings(){
     state.theme=v; LS.set('theme',v); applyTheme(); bg.querySelectorAll('#seg-theme button').forEach(b=>b.classList.toggle('on',b.dataset.v===v)); });
   bg.querySelector('#seg-size').addEventListener('click',e=>{ const v=e.target.dataset.v; if(!v)return;
     state.fscale=+v; LS.set('fscale',+v); applyScale(); bg.querySelectorAll('#seg-size button').forEach(b=>b.classList.toggle('on',b.dataset.v===v)); });
+  bg.querySelector('#seg-tr').addEventListener('click',e=>{ const v=e.target.dataset.v; if(!v)return;
+    state.showTr=(v==='on'); LS.set('showTr',state.showTr); applyTr(); bg.querySelectorAll('#seg-tr button').forEach(b=>b.classList.toggle('on',b.dataset.v===v)); });
   bg.querySelector('#dl').addEventListener('click',async ev=>{
     const btn=ev.target; btn.textContent='Downloading…'; btn.disabled=true;
     const idx=await getIndex(); let done=0;
