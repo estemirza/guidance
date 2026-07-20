@@ -1,5 +1,5 @@
 /* Guidance service worker — offline-first */
-const VERSION = 'guidance-v5';
+const VERSION = 'guidance-v7';
 const SHELL = VERSION + '-shell';
 const DATA  = VERSION + '-data';
 const FONTS = VERSION + '-fonts';

@@ -40,6 +40,7 @@ async function getSurah(n){
   const o = await r.json(); surahCache.set(n,o); return o;
 }
 const QURAN_CDN='https://cdn.jsdelivr.net/npm/quran-json@3.1.2/dist/chapters/en/';
+const BASMALA='بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
 const quranCache=new Map();
 async function getQuran(n){
   if(quranCache.has(n)) return quranCache.get(n);
@@ -167,15 +168,19 @@ async function viewReader(n, params){
     return -1;
   }
   function scrollToAyah(a){
-    const i=passageForAyah(a); if(i<0) return;
-    const bqs=content.querySelectorAll('blockquote');
-    const start=bqs[i]; if(!start) return;
-    let target=start, el=start.nextElementSibling;
-    const re=new RegExp('^Ayah\\s+'+a+'(?!\\d)');   // exact āyah sub-heading inside the passage
-    while(el && el.tagName!=='BLOCKQUOTE'){
-      if(/^H[2-6]$/.test(el.tagName) && re.test(el.textContent.trim())){ target=el; break; }
-      el=el.nextElementSibling;
+    // 1) exact āyah heading anywhere (works for "# Ayah N" and bulk sub-headings)
+    const reExact=new RegExp('^Ayah\\s+'+a+'(?!\\d)');
+    let target=[...content.querySelectorAll('h1,h2,h3,h4,h5,h6')].find(h=>reExact.test(h.textContent.trim()));
+    // 2) else the marker (blockquote or heading) whose "Ayah X–Y" range covers a
+    if(!target){
+      for(const el of content.querySelectorAll('blockquote,h1,h2,h3,h4,h5,h6')){
+        const m=el.textContent.trim().match(/^Ayah\s+(\d+)(?:\s*[–-]\s*(\d+))?/);
+        if(!m) continue;
+        const s=+m[1], e=m[2]?+m[2]:s;
+        if(a>=s && a<=e){ target=el; break; }
+      }
     }
+    if(!target) return;
     target.scrollIntoView({block:'start'});   // instant jump — no visible scrolling
     target.classList.add('cm-hit'); setTimeout(()=>target.classList.remove('cm-hit'),2200);
   }
@@ -189,7 +194,9 @@ async function viewReader(n, params){
     let verses;
     try{ verses=await getQuran(n); }
     catch(e){ content.innerHTML=`<div class="note">Couldn't load the Qur'an text. Go online once to cache it — then it works offline.</div>`; return; }
-    content.innerHTML=`<div class="quran">`+verses.map(v=>{
+    if(n===1) verses=verses.filter(v=>v.a!==1);   // Basmala shown as opening line, not āyah 1
+    const basmala = (n!==9) ? `<div class="basmala" dir="rtl">${BASMALA}</div>` : '';
+    content.innerHTML=`<div class="quran">`+basmala+verses.map(v=>{
       const has=passageForAyah(v.a)>=0;
       return `<div class="ayah${has?' has-note':''}" data-a="${v.a}">
         <div class="ayah-body" role="button" tabindex="0" aria-label="Āyah ${v.a} commentary">
