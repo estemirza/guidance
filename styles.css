@@ -181,6 +181,14 @@ button{font-family:inherit;cursor:pointer}
 .basmala{font-family:var(--quran-font);direction:rtl;text-align:center;color:var(--maroon);
   font-size:1.55rem;line-height:2;padding:14px 4px 20px;margin-bottom:6px;border-bottom:1px solid var(--line)}
 .ayah{border-bottom:1px solid var(--line);padding:18px 4px 14px}
+.ckpt{display:flex;align-items:center;gap:12px;margin:6px 2px}
+.ckpt-line{flex:1;height:1px;background:var(--line)}
+.ckpt-label{font-family:var(--sans);letter-spacing:.04em;white-space:nowrap;text-transform:uppercase}
+.ckpt-juz{margin:20px 2px 4px}
+.ckpt-juz .ckpt-label{font-size:.72rem;font-weight:700;color:var(--maroon);
+  border:1px solid var(--maroon-soft);border-radius:999px;padding:4px 12px;background:var(--cream-2)}
+.ckpt-juz .ckpt-line{background:var(--maroon-soft);opacity:.5}
+.ckpt-hizb .ckpt-label{font-size:.66rem;font-weight:600;color:var(--gold)}
 .ayah-ar{font-family:var(--quran-font);direction:rtl;text-align:right;font-size:1.9rem;line-height:2.3;color:var(--ink)}
 .sajdah{color:var(--gold);font-size:1.05em}
 .ayah-end{display:inline-block;font-family:var(--sans);font-size:.9rem;color:var(--maroon);
