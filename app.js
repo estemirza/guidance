@@ -42,6 +42,7 @@ async function getSurah(n){
 const QURAN_AR='https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/editions/ara-quranuthmanihaf/'; // standard Uthmani code points
 const QURAN_EN='https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/editions/eng-ummmuhammad/';     // Saheeh International
 const BASMALA='بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
+const SAJDAH=new Set(['7:206','13:15','16:49','17:107','19:58','22:18','22:77','25:60','27:25','32:15','38:24','41:37','53:62','84:21','96:19']);
 const quranCache=new Map();
 async function getQuran(n){
   if(quranCache.has(n)) return quranCache.get(n);
@@ -203,7 +204,7 @@ async function viewReader(n, params){
       const has=passageForAyah(v.a)>=0;
       return `<div class="ayah${has?' has-note':''}" data-a="${v.a}">
         <div class="ayah-body" role="button" tabindex="0" aria-label="Āyah ${v.a} commentary">
-          <div class="ayah-ar">${v.t}<span class="ayah-end">${toArabicNum(v.a)}</span></div>
+          <div class="ayah-ar">${v.t}${SAJDAH.has(n+':'+v.a)?'<span class="sajdah" aria-label="Sajdah" title="Āyat sajdah"> ۩</span>':''}<span class="ayah-end">${toArabicNum(v.a)}</span></div>
           ${v.tr?`<div class="ayah-tr">${esc(v.tr)}</div>`:''}
         </div>
         <div class="ayah-actions">
