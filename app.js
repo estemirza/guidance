@@ -39,16 +39,19 @@ async function getSurah(n){
   const r = await fetch('data/surah-'+n+'.json');
   const o = await r.json(); surahCache.set(n,o); return o;
 }
-const QURAN_CDN='https://cdn.jsdelivr.net/npm/quran-json@3.1.2/dist/chapters/en/';
+const QURAN_AR='https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/editions/ara-quranuthmanihaf/'; // standard Uthmani code points
+const QURAN_EN='https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/editions/eng-ummmuhammad/';     // Saheeh International
 const BASMALA='بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
 const quranCache=new Map();
 async function getQuran(n){
   if(quranCache.has(n)) return quranCache.get(n);
-  const r=await fetch(QURAN_CDN+n+'.json');
-  if(!r.ok) throw new Error('quran fetch');
-  const o=await r.json();
-  const verses=(o.verses||[]).map(v=>({a:v.id,t:v.text,tr:v.translation||''}));
-  quranCache.set(n,verses); return verses;
+  const [arR, enR] = await Promise.all([ fetch(QURAN_AR+n+'.json'), fetch(QURAN_EN+n+'.json').catch(()=>null) ]);
+  if(!arR.ok) throw new Error('quran fetch');
+  const ar = await arR.json();
+  const tr = {};
+  try{ if(enR && enR.ok){ const en = await enR.json(); (en.chapter||[]).forEach(v=>{ tr[v.verse]=v.text||''; }); } }catch(e){}
+  const verses = (ar.chapter||[]).map(v=>({ a:v.verse, t:v.text, tr:tr[v.verse]||'' }));
+  quranCache.set(n, verses); return verses;
 }
 const AR_DIGITS='٠١٢٣٤٥٦٧٨٩';
 function toArabicNum(x){ return String(x).replace(/\d/g,d=>AR_DIGITS[+d]); }
@@ -361,7 +364,8 @@ function openSettings(){
     const idx=await getIndex(); let done=0;
     for(const s of idx){
       try{ await fetch('data/surah-'+s.n+'.json'); }catch(e){}
-      try{ await fetch(QURAN_CDN+s.n+'.json'); }catch(e){}
+      try{ await fetch(QURAN_AR+s.n+'.json'); }catch(e){}
+      try{ await fetch(QURAN_EN+s.n+'.json'); }catch(e){}
       done++; btn.textContent=`Downloading… ${done}/${idx.length}`;
     }
     btn.textContent='Saved offline ✓'; toast('Qur\'an + notes cached for offline');

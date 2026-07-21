@@ -1,5 +1,5 @@
 /* Guidance service worker — offline-first */
-const VERSION = 'guidance-v8';
+const VERSION = 'guidance-v10';
 const SHELL = VERSION + '-shell';
 const DATA  = VERSION + '-data';
 const FONTS = VERSION + '-fonts';
@@ -32,7 +32,7 @@ self.addEventListener('fetch', e=>{
     e.respondWith(cacheFirst(req, FONTS)); return;
   }
   // Qur'an text from CDN — cache-first (immutable, versioned URL)
-  if(url.hostname.includes('cdn.jsdelivr.net') && url.pathname.includes('quran-json')){
+  if(url.hostname.includes('cdn.jsdelivr.net') && (url.pathname.includes('quran-json') || url.pathname.includes('quran-api'))){
     e.respondWith(cacheFirst(req, QURAN)); return;
   }
   if(url.origin !== location.origin) return;
