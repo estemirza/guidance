@@ -47,6 +47,9 @@ const SAJDAH=new Set(['7:206','13:15','16:49','17:107','19:58','22:18','22:77','
 const JUZ_START={'1:1':1,'2:142':2,'2:253':3,'3:93':4,'4:24':5,'4:148':6,'5:82':7,'6:111':8,'7:88':9,'8:41':10,'9:93':11,'11:6':12,'12:53':13,'15:1':14,'17:1':15,'18:75':16,'21:1':17,'23:1':18,'25:21':19,'27:56':20,'29:46':21,'33:31':22,'36:28':23,'39:32':24,'41:47':25,'46:1':26,'51:31':27,'58:1':28,'67:1':29,'78:1':30};
 // Only the mid-juz (even) hizb starts; odd hizbs coincide with juz starts and share that marker.
 const HIZB_START={'2:75':2,'2:203':4,'3:15':6,'3:171':8,'4:88':10,'5:27':12,'6:36':14,'7:1':16,'7:171':18,'9:34':20,'10:26':22,'11:84':24,'13:19':26,'16:51':28,'17:99':30,'20:1':32,'22:1':34,'24:21':36,'26:111':38,'28:51':40,'31:22':42,'34:24':44,'37:145':46,'40:41':48,'43:24':50,'48:18':52,'55:1':54,'62:1':56,'72:1':58,'87:1':60};
+// Single-word highlight(s). Middle word of the Qur'an by word count: Al-Kahf 18:19 وَلۡيَتَلَطَّفۡ.
+const WORD_HI={'18:19':'وَلۡيَتَلَطَّفۡ'};
+function hiliteWord(n,a,t){ const w=WORD_HI[n+':'+a]; return w?t.replace(w,'<span class="word-hi">'+w+'</span>'):t; }
 function checkpointMark(n,a){
   const k=n+':'+a;
   if(JUZ_START[k]!=null){ const j=JUZ_START[k]; return `<div class="ckpt ckpt-juz" role="separator" aria-label="Start of Juz ${j}"><span class="ckpt-line"></span><span class="ckpt-label">Juz ${j} · Ḥizb ${2*j-1}</span><span class="ckpt-line"></span></div>`; }
@@ -214,7 +217,7 @@ async function viewReader(n, params){
       const has=passageForAyah(v.a)>=0;
       return checkpointMark(n,v.a)+`<div class="ayah${has?' has-note':''}" data-a="${v.a}">
         <div class="ayah-body" role="button" tabindex="0" aria-label="Āyah ${v.a} commentary">
-          <div class="ayah-ar">${v.t}${SAJDAH.has(n+':'+v.a)?'<span class="sajdah" aria-label="Sajdah" title="Āyat sajdah"> ۩</span>':''}<span class="ayah-end">${toArabicNum(v.a)}</span></div>
+          <div class="ayah-ar">${hiliteWord(n,v.a,v.t)}${SAJDAH.has(n+':'+v.a)?'<span class="sajdah" aria-label="Sajdah" title="Āyat sajdah"> ۩</span>':''}<span class="ayah-end">${toArabicNum(v.a)}</span></div>
           ${v.tr?`<div class="ayah-tr">${esc(v.tr)}</div>`:''}
         </div>
         <div class="ayah-actions">

@@ -191,6 +191,7 @@ button{font-family:inherit;cursor:pointer}
 .ckpt-hizb .ckpt-label{font-size:.66rem;font-weight:600;color:var(--gold)}
 .ayah-ar{font-family:var(--quran-font);direction:rtl;text-align:right;font-size:1.9rem;line-height:2.3;color:var(--ink)}
 .sajdah{color:var(--gold);font-size:1.05em}
+.word-hi{color:#d64545}
 .ayah-end{display:inline-block;font-family:var(--sans);font-size:.9rem;color:var(--maroon);
   border:1px solid var(--maroon-soft);border-radius:50%;min-width:1.9em;height:1.9em;line-height:1.75em;
   text-align:center;margin:0 8px;vertical-align:middle}
