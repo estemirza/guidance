@@ -14,6 +14,7 @@
   --serif:"Fraunces",Georgia,"Times New Roman",serif;
   --sans:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
   --arabic:"Amiri","Scheherazade New","Times New Roman",serif;
+  --quran-font:"Amiri Quran","Amiri","Scheherazade New",serif;  /* mushaf-accurate for Qur'an text */
   --maxw:720px;
 }
 [data-theme="dark"]{
@@ -177,10 +178,10 @@ button{font-family:inherit;cursor:pointer}
 
 /* ---------- Qur'an reading mode ---------- */
 .quran{padding:10px 0 60px}
-.basmala{font-family:var(--arabic);direction:rtl;text-align:center;color:var(--maroon);
+.basmala{font-family:var(--quran-font);direction:rtl;text-align:center;color:var(--maroon);
   font-size:1.55rem;line-height:2;padding:14px 4px 20px;margin-bottom:6px;border-bottom:1px solid var(--line)}
 .ayah{border-bottom:1px solid var(--line);padding:18px 4px 14px}
-.ayah-ar{font-family:var(--arabic);direction:rtl;text-align:right;font-size:1.9rem;line-height:2.15;color:var(--ink)}
+.ayah-ar{font-family:var(--quran-font);direction:rtl;text-align:right;font-size:1.9rem;line-height:2.3;color:var(--ink)}
 .ayah-end{display:inline-block;font-family:var(--sans);font-size:.9rem;color:var(--maroon);
   border:1px solid var(--maroon-soft);border-radius:50%;min-width:1.9em;height:1.9em;line-height:1.75em;
   text-align:center;margin:0 8px;vertical-align:middle}
